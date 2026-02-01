@@ -1,5 +1,5 @@
 // src/App.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { init, miniApp, themeParams, backButton } from '@tma.js/sdk';
 
 function App() {
@@ -10,6 +10,8 @@ function App() {
     symptoms: '',
   });
 
+  const alertShown = useRef(false); // чтобы алерт не спамил
+
   const totalSteps = 3;
 
   useEffect(() => {
@@ -17,17 +19,22 @@ function App() {
 
     const initialize = async () => {
       try {
-        // Пытаемся инициализировать как настоящий Mini App
+        console.log('Попытка инициализации Mini App SDK...');
+
+        // Инициализация SDK
         init();
 
         if (isMounted) {
+          console.log('SDK инициализирован, вызываем ready() и expand()');
           miniApp.ready();
           miniApp.expand();
 
+          console.log('Монтируем backButton');
           backButton.mount();
           backButton.show();
 
           backButton.on('click', () => {
+            console.log('Нажата кнопка Назад в Telegram');
             if (step > 1) {
               setStep(prev => prev - 1);
             } else {
@@ -36,11 +43,11 @@ function App() {
           });
         }
       } catch (error) {
-        // Если ошибка (например, не в Telegram) — просто логируем
-        console.warn('Mini App не инициализирован (вероятно, открыто вне Telegram):', error);
+        console.error('Ошибка инициализации Mini App:', error);
 
-        // Можно показать сообщение пользователю
-        if (isMounted) {
+        // Показываем алерт только один раз
+        if (isMounted && !alertShown.current) {
+          alertShown.current = true;
           alert('Для полной работы откройте приложение внутри Telegram');
         }
       }
@@ -74,17 +81,17 @@ function App() {
 
   const submitForm = () => {
     try {
-      // Отправляем данные боту (вне Telegram будет просто предупреждение)
+      console.log('Отправка данных в Telegram:', formData);
       miniApp.sendData(JSON.stringify(formData));
       miniApp.showAlert('Анкета отправлена! Спасибо!');
       miniApp.close();
     } catch (err) {
-      console.warn('Отправка данных не удалась (не в Telegram):', err);
+      console.warn('Отправка данных не удалась (возможно, не в Telegram):', err);
       alert('Анкета готова!\n\n' + JSON.stringify(formData, null, 2));
     }
   };
 
-  // Адаптация под тему (fallback на светлую тему при отсутствии данных)
+  // Адаптация под тему (fallback на светлую, если themeParams не доступен)
   const isDark = themeParams?.isDark ?? false;
   const bgColor = themeParams?.bgColor ?? (isDark ? '#0f1621' : '#ffffff');
   const textColor = themeParams?.textColor ?? (isDark ? '#e0e0e0' : '#000000');
