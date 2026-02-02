@@ -1,11 +1,8 @@
-// src/App.tsx — Финальный вариант без ошибок TypeScript
+// src/App.tsx — Рабочий вариант без пакета @tma.js/sdk
 import { useEffect, useState, useRef } from 'react';
-import { init, miniApp as tmaMiniApp, themeParams as tmaThemeParams, backButton as tmaBackButton } from '@tma.js/sdk';
 
-// Принудительно указываем тип any, чтобы TypeScript не ругался
-const miniApp: any = tmaMiniApp;
-const themeParams: any = tmaThemeParams;
-const backButton: any = tmaBackButton;
+// Глобальный Telegram WebApp (доступен только внутри Telegram)
+const telegramWebApp = (window as any).Telegram?.WebApp;
 
 function App() {
   const [step, setStep] = useState(1);
@@ -20,51 +17,38 @@ function App() {
   const totalSteps = 3;
 
   useEffect(() => {
-    console.log('App запущен');
+    console.log('Приложение запущено');
 
-    const initialize = () => {
+    if (telegramWebApp) {
+      console.log('Telegram WebApp найден — инициализация');
+
       try {
-        console.log('Инициализация SDK...');
+        telegramWebApp.ready();
+        telegramWebApp.expand();
 
-        init();
+        const tgBackButton = telegramWebApp.BackButton;
+        if (tgBackButton) {
+          tgBackButton.show();
 
-        if (miniApp) {
-          miniApp.ready?.();
-          miniApp.expand?.();
-          console.log('ready и expand вызваны');
-        }
-
-        if (backButton) {
-          backButton.mount?.();
-          backButton.show?.();
-          console.log('backButton показан');
-
-          backButton.on?.('click', () => {
+          tgBackButton.onClick(() => {
             console.log('Нажата кнопка Назад');
             if (step > 1) {
               setStep((prev) => prev - 1);
             } else {
-              miniApp?.close?.();
+              telegramWebApp.close();
             }
           });
         }
-      } catch (error) {
-        console.error('Ошибка инициализации Mini App:', error);
-
-        if (!alertShown.current) {
-          alertShown.current = true;
-          alert('Для полной работы откройте приложение внутри Telegram');
-        }
+      } catch (err) {
+        console.error('Ошибка Telegram WebApp:', err);
       }
-    };
-
-    initialize();
-
-    return () => {
-      if (backButton) {
-        backButton.hide?.();
+    } else {
+      console.warn('Telegram WebApp не найден — запуск вне Telegram');
+      if (!alertShown.current) {
+        alertShown.current = true;
+        alert('Для полной работы откройте приложение внутри Telegram');
       }
-    };
+    }
   }, [step]);
 
   const handleChange = (field: keyof typeof formData, value: string | number) => {
@@ -84,24 +68,24 @@ function App() {
   };
 
   const submitForm = () => {
-    try {
-      console.log('Отправка данных:', formData);
-      miniApp?.sendData?.(JSON.stringify(formData));
-      miniApp?.showAlert?.('Анкета отправлена! Спасибо!');
-      miniApp?.close?.();
-    } catch (err) {
-      console.warn('Отправка не удалась (не в Telegram?):', err);
+    if (telegramWebApp) {
+      telegramWebApp.sendData(JSON.stringify(formData));
+      telegramWebApp.showAlert('Анкета отправлена! Спасибо!');
+      telegramWebApp.close();
+    } else {
       alert('Анкета готова!\n\n' + JSON.stringify(formData, null, 2));
     }
   };
 
-  // Адаптация темы с полной защитой
-  const isDark = themeParams?.isDark ?? false;
-  const bgColor = themeParams?.bgColor ?? (isDark ? '#0f1621' : '#ffffff');
-  const textColor = themeParams?.textColor ?? (isDark ? '#e0e0e0' : '#000000');
-  const accentColor = themeParams?.buttonColor ?? '#5288c1';
-  const secondaryBg = themeParams?.sectionBgColor ?? (isDark ? '#1c1c1e' : '#f5f5f5');
-  const hintColor = themeParams?.hintColor ?? '#888888';
+  // Определяем тему из Telegram (если доступно)
+  const isDark = telegramWebApp?.colorScheme === 'dark' || false;
+
+  // Цвета
+  const bgColor = isDark ? '#0f1621' : '#ffffff';
+  const textColor = isDark ? '#e0e0e0' : '#000000';
+  const accentColor = '#5288c1';
+  const secondaryBg = isDark ? '#1c1c1e' : '#f5f5f5';
+  const hintColor = '#888888';
 
   return (
     <div
