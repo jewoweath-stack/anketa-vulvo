@@ -1,7 +1,7 @@
-// src/App.tsx — Рабочий вариант без пакета @tma.js/sdk
-import { useEffect, useState, useRef } from 'react';
+// src/App.tsx — Финальный вариант без предупреждения
+import { useEffect, useState } from 'react';
 
-// Глобальный Telegram WebApp (доступен только внутри Telegram)
+// Глобальный Telegram WebApp (нативный, без внешних пакетов)
 const telegramWebApp = (window as any).Telegram?.WebApp;
 
 function App() {
@@ -11,8 +11,6 @@ function App() {
     painLevel: 5,
     symptoms: '',
   });
-
-  const alertShown = useRef(false);
 
   const totalSteps = 3;
 
@@ -44,10 +42,7 @@ function App() {
       }
     } else {
       console.warn('Telegram WebApp не найден — запуск вне Telegram');
-      if (!alertShown.current) {
-        alertShown.current = true;
-        alert('Для полной работы откройте приложение внутри Telegram');
-      }
+      // alert убрали полностью — теперь просто лог в консоль
     }
   }, [step]);
 
