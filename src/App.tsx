@@ -1,25 +1,36 @@
-// src/App.tsx — Финальный вариант без предупреждения
+// src/App.tsx — Анкета с 18 вопросами + отправка в чат -5127067703
 import { useEffect, useState } from 'react';
 
-// Глобальный Telegram WebApp (нативный, без внешних пакетов)
+// Глобальный Telegram WebApp
 const telegramWebApp = (window as any).Telegram?.WebApp;
 
 function App() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
+    name: '',
     age: '',
-    painLevel: 5,
-    symptoms: '',
+    maritalStatus: '',
+    cityTimezone: '',
+    contact: '',
+    symptomsDuration: '',
+    vulvaSymptoms: '',
+    urinationSymptoms: '',
+    painConstant: '',
+    painDuringSleep: '',
+    painSitting: '',
+    painPsychoLink: '',
+    treatmentsTried: '',
+    treatmentEffect: '',
+    diagnosis: '',
+    lifeImpact: '',
+    desiredResults: '',
+    additionalInfo: '',
   });
 
-  const totalSteps = 3;
+  const totalSteps = 18;
 
   useEffect(() => {
-    console.log('Приложение запущено');
-
     if (telegramWebApp) {
-      console.log('Telegram WebApp найден — инициализация');
-
       try {
         telegramWebApp.ready();
         telegramWebApp.expand();
@@ -29,7 +40,6 @@ function App() {
           tgBackButton.show();
 
           tgBackButton.onClick(() => {
-            console.log('Нажата кнопка Назад');
             if (step > 1) {
               setStep((prev) => prev - 1);
             } else {
@@ -40,47 +50,137 @@ function App() {
       } catch (err) {
         console.error('Ошибка Telegram WebApp:', err);
       }
-    } else {
-      console.warn('Telegram WebApp не найден — запуск вне Telegram');
-      // alert убрали полностью — теперь просто лог в консоль
     }
   }, [step]);
 
-  const handleChange = (field: keyof typeof formData, value: string | number) => {
+  const handleChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const nextStep = () => {
     if (step < totalSteps) {
-      setStep((prev) => prev + 1);
+      setStep(step + 1);
     }
   };
 
   const prevStep = () => {
     if (step > 1) {
-      setStep((prev) => prev - 1);
+      setStep(step - 1);
     }
   };
 
   const submitForm = () => {
     if (telegramWebApp) {
+      // Отправляем данные боту
       telegramWebApp.sendData(JSON.stringify(formData));
       telegramWebApp.showAlert('Анкета отправлена! Спасибо!');
       telegramWebApp.close();
     } else {
+      // Для теста на компьютере
       alert('Анкета готова!\n\n' + JSON.stringify(formData, null, 2));
     }
   };
 
-  // Определяем тему из Telegram (если доступно)
+  // Тема из Telegram или fallback
   const isDark = telegramWebApp?.colorScheme === 'dark' || false;
-
-  // Цвета
   const bgColor = isDark ? '#0f1621' : '#ffffff';
   const textColor = isDark ? '#e0e0e0' : '#000000';
   const accentColor = '#5288c1';
   const secondaryBg = isDark ? '#1c1c1e' : '#f5f5f5';
   const hintColor = '#888888';
+
+  const questions = [
+    { label: '1. Как Вас зовут?', field: 'name', type: 'text', placeholder: 'Ваше имя' },
+    { label: '2. Ваш возраст', field: 'age', type: 'number', placeholder: 'Например: 32' },
+    {
+      label: '3. Семейное положение',
+      field: 'maritalStatus',
+      type: 'select',
+      options: ['Замужем', 'В отношениях', 'Свободна'],
+    },
+    { label: '4. Ваш город и часовой пояс по отношению к Москве', field: 'cityTimezone', type: 'text', placeholder: 'Например: Екатеринбург, +2' },
+    { label: '5. Контакт для связи', field: 'contact', type: 'text', placeholder: '@username или телефон' },
+    { label: '6. Как давно Вы ощущаете симптомы', field: 'symptomsDuration', type: 'text', placeholder: 'Например: 2 года' },
+    {
+      label: '7. Какие симптомы в области вульвы/влагалища вас беспокоят?',
+      field: 'vulvaSymptoms',
+      type: 'textarea',
+      placeholder: 'Жжение и зуд вульвы; Боль вульвы; Ощущение поврежденной слизистой; Гипер чувствительный клитор; Ощущение жжения как при молочнице и рецидивирующая молочница; Жалоб в области вульвы нет; Другое',
+    },
+    {
+      label: '8. Какие симптомы при мочеиспускании вас беспокоят?',
+      field: 'urinationSymptoms',
+      type: 'textarea',
+      placeholder: 'Зуд и жжение в уретре; Жжение при мочеиспускании; Циститные ощущения и рецидивирующие циститы; Ложные позывы к мочеиспусканию; Чувство неопрожненного мочевого пузыря; Задержка при мочеиспускании; Жалоб при мочеиспускании нет; Другое',
+    },
+    {
+      label: '9. Боль носит постоянный характер?',
+      field: 'painConstant',
+      type: 'select',
+      options: [
+        'Да, болит постоянно, просто с разной интенсивностью',
+        'Болит только во время полового акта',
+        'Болит только если прикасаться или давить',
+        'Другое',
+      ],
+    },
+    {
+      label: '10. Есть боль во время сна?',
+      field: 'painDuringSleep',
+      type: 'select',
+      options: ['Да', 'Нет', 'Обычно нет, но в период обострения боль может мешать даже во сне'],
+    },
+    {
+      label: '11. Усиливается в положении сидя?',
+      field: 'painSitting',
+      type: 'select',
+      options: ['Да', 'Нет'],
+    },
+    {
+      label: '12. Замечаете взаимосвязь боли и психологического состояния?',
+      field: 'painPsychoLink',
+      type: 'select',
+      options: ['Да, взаимосвязь есть', 'Нет, не сказала бы', 'Другое'],
+    },
+    {
+      label: '13. Какие варианты лечения пробовали?',
+      field: 'treatmentsTried',
+      type: 'textarea',
+      placeholder: 'Антибактериальные препараты; Противогрибковые; Антидепрессанты; Блокада полового нерва; Инъекции ботокса; Операции; Физиотерапия; Другое',
+    },
+    {
+      label: '14. Был ли замечен значительный эффект от лечения?',
+      field: 'treatmentEffect',
+      type: 'select',
+      options: ['Да', 'Нет', 'Другое'],
+    },
+    {
+      label: '15. Доктора зафиксировали диагноз? Если да, то какой',
+      field: 'diagnosis',
+      type: 'textarea',
+      placeholder: 'Вульводиния, вагинизм; Синдром хронической тазовой боли; Нейропатия полового нерва; Миофасциальный болевой синдром; Цисталгия; Диагноз не зафиксирован; Другое',
+    },
+    {
+      label: '16. На каких сферах вашей жизни боль сказывается сильнее всего?',
+      field: 'lifeImpact',
+      type: 'textarea',
+      placeholder: 'Не могу вести половую жизнь; Пропускаю работу/учебу; Не могу выполнять домашние дела; Боль наносит удар по всем сферам; Психологическое давление; Другое',
+    },
+    {
+      label: '17. Каких результатов вы хотите достичь в первую очередь? С какими симптомами справиться?',
+      field: 'desiredResults',
+      type: 'textarea',
+      placeholder: 'Напишите подробно...',
+    },
+    {
+      label: '18. Напишите, если есть что-то, о чем мы вас не спросили, но вам хочется рассказать:',
+      field: 'additionalInfo',
+      type: 'textarea',
+      placeholder: 'Ваши мысли...',
+    },
+  ];
+
+  const currentQuestion = questions[step - 1];
 
   return (
     <div
@@ -116,73 +216,66 @@ function App() {
         Анкета — шаг {step} из {totalSteps}
       </h1>
 
-      {step === 1 && (
-        <div style={{ marginBottom: '32px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-            Ваш возраст
-          </label>
-          <input
-            type="number"
-            value={formData.age}
-            onChange={(e) => handleChange('age', e.target.value)}
-            placeholder="Например: 32"
-            style={{
-              width: '100%',
-              padding: '14px 16px',
-              fontSize: '17px',
-              borderRadius: '12px',
-              border: `1px solid ${hintColor}`,
-              backgroundColor: secondaryBg,
-              color: textColor,
-              outline: 'none',
-            }}
-          />
-        </div>
-      )}
+      <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+        {currentQuestion.label}
+      </label>
 
-      {step === 2 && (
-        <div style={{ marginBottom: '32px' }}>
-          <label style={{ display: 'block', marginBottom: '12px', fontWeight: 500 }}>
-            Уровень боли сейчас (0–10)
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="10"
-            step="1"
-            value={formData.painLevel}
-            onChange={(e) => handleChange('painLevel', Number(e.target.value))}
-            style={{ width: '100%', marginBottom: '12px' }}
-          />
-          <div style={{ textAlign: 'center', fontSize: '28px', fontWeight: 600 }}>
-            {formData.painLevel}
-          </div>
-        </div>
-      )}
-
-      {step === 3 && (
-        <div style={{ marginBottom: '32px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
-            Опишите основные симптомы
-          </label>
-          <textarea
-            value={formData.symptoms}
-            onChange={(e) => handleChange('symptoms', e.target.value)}
-            placeholder="Жжение, зуд, боль при сидении..."
-            rows={5}
-            style={{
-              width: '100%',
-              padding: '14px 16px',
-              fontSize: '17px',
-              borderRadius: '12px',
-              border: `1px solid ${hintColor}`,
-              backgroundColor: secondaryBg,
-              color: textColor,
-              resize: 'vertical',
-              minHeight: '120px',
-            }}
-          />
-        </div>
+      {currentQuestion.type === 'text' || currentQuestion.type === 'number' ? (
+        <input
+          type={currentQuestion.type}
+          value={formData[currentQuestion.field as keyof typeof formData]}
+          onChange={(e) => handleChange(currentQuestion.field as keyof typeof formData, e.target.value)}
+          placeholder={currentQuestion.placeholder}
+          style={{
+            width: '100%',
+            padding: '14px 16px',
+            fontSize: '17px',
+            borderRadius: '12px',
+            border: `1px solid ${hintColor}`,
+            backgroundColor: secondaryBg,
+            color: textColor,
+            outline: 'none',
+          }}
+        />
+      ) : currentQuestion.type === 'select' ? (
+        <select
+          value={formData[currentQuestion.field as keyof typeof formData]}
+          onChange={(e) => handleChange(currentQuestion.field as keyof typeof formData, e.target.value)}
+          style={{
+            width: '100%',
+            padding: '14px 16px',
+            fontSize: '17px',
+            borderRadius: '12px',
+            border: `1px solid ${hintColor}`,
+            backgroundColor: secondaryBg,
+            color: textColor,
+          }}
+        >
+          <option value="">Выберите...</option>
+          {currentQuestion.options?.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <textarea
+          value={formData[currentQuestion.field as keyof typeof formData]}
+          onChange={(e) => handleChange(currentQuestion.field as keyof typeof formData, e.target.value)}
+          placeholder={currentQuestion.placeholder}
+          rows={currentQuestion.field.includes('additional') ? 8 : 5}
+          style={{
+            width: '100%',
+            padding: '14px 16px',
+            fontSize: '17px',
+            borderRadius: '12px',
+            border: `1px solid ${hintColor}`,
+            backgroundColor: secondaryBg,
+            color: textColor,
+            resize: 'vertical',
+            minHeight: '120px',
+          }}
+        />
       )}
 
       <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '40px' }}>
@@ -234,7 +327,7 @@ function App() {
               cursor: 'pointer',
             }}
           >
-            Отправить
+            Отправить анкету
           </button>
         )}
       </div>
