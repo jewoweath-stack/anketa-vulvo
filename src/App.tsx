@@ -1,4 +1,4 @@
-// src/App.tsx
+// src/App.tsx — Финальный рабочий вариант
 import { useEffect, useState, useRef } from 'react';
 import { init, miniApp, themeParams, backButton } from '@tma.js/sdk';
 
@@ -10,43 +10,47 @@ function App() {
     symptoms: '',
   });
 
-  const alertShown = useRef(false); // чтобы алерт не спамил
+  const alertShown = useRef(false);
 
   const totalSteps = 3;
 
   useEffect(() => {
-    let isMounted = true;
+    console.log('App запущен');
 
-    const initialize = async () => {
+    const initialize = () => {
       try {
-        console.log('Попытка инициализации Mini App SDK...');
+        console.log('Инициализация SDK...');
 
-        // Инициализация SDK
+        // Инициализация
         init();
 
-        if (isMounted) {
-          console.log('SDK инициализирован, вызываем ready() и expand()');
-          miniApp.ready();
-          miniApp.expand();
+        console.log('SDK инициализирован');
 
-          console.log('Монтируем backButton');
-          backButton.mount();
-          backButton.show();
+        // Вызываем методы только если объекты существуют
+        if (miniApp) {
+          miniApp.ready?.();
+          miniApp.expand?.();
+          console.log('ready и expand вызваны');
+        }
 
-          backButton.on('click', () => {
-            console.log('Нажата кнопка Назад в Telegram');
+        if (backButton) {
+          backButton.mount?.();
+          backButton.show?.();
+          console.log('backButton смонтирован и показан');
+
+          backButton.on?.('click', () => {
+            console.log('Нажата кнопка Назад');
             if (step > 1) {
-              setStep(prev => prev - 1);
+              setStep((prev) => prev - 1);
             } else {
-              miniApp.close();
+              miniApp?.close?.();
             }
           });
         }
       } catch (error) {
         console.error('Ошибка инициализации Mini App:', error);
 
-        // Показываем алерт только один раз
-        if (isMounted && !alertShown.current) {
+        if (!alertShown.current) {
           alertShown.current = true;
           alert('Для полной работы откройте приложение внутри Telegram');
         }
@@ -56,42 +60,41 @@ function App() {
     initialize();
 
     return () => {
-      isMounted = false;
       if (backButton) {
-        backButton.hide();
+        backButton.hide?.();
       }
     };
   }, [step]);
 
   const handleChange = (field: keyof typeof formData, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const nextStep = () => {
     if (step < totalSteps) {
-      setStep(prev => prev + 1);
+      setStep((prev) => prev + 1);
     }
   };
 
   const prevStep = () => {
     if (step > 1) {
-      setStep(prev => prev - 1);
+      setStep((prev) => prev - 1);
     }
   };
 
   const submitForm = () => {
     try {
-      console.log('Отправка данных в Telegram:', formData);
-      miniApp.sendData(JSON.stringify(formData));
-      miniApp.showAlert('Анкета отправлена! Спасибо!');
-      miniApp.close();
+      console.log('Отправка данных:', formData);
+      miniApp?.sendData?.(JSON.stringify(formData));
+      miniApp?.showAlert?.('Анкета отправлена! Спасибо!');
+      miniApp?.close?.();
     } catch (err) {
-      console.warn('Отправка данных не удалась (возможно, не в Telegram):', err);
+      console.warn('Отправка не удалась (не в Telegram?):', err);
       alert('Анкета готова!\n\n' + JSON.stringify(formData, null, 2));
     }
   };
 
-  // Адаптация под тему (fallback на светлую, если themeParams не доступен)
+  // Адаптация темы с полной проверкой на undefined
   const isDark = themeParams?.isDark ?? false;
   const bgColor = themeParams?.bgColor ?? (isDark ? '#0f1621' : '#ffffff');
   const textColor = themeParams?.textColor ?? (isDark ? '#e0e0e0' : '#000000');
@@ -141,7 +144,7 @@ function App() {
           <input
             type="number"
             value={formData.age}
-            onChange={e => handleChange('age', e.target.value)}
+            onChange={(e) => handleChange('age', e.target.value)}
             placeholder="Например: 32"
             style={{
               width: '100%',
@@ -168,7 +171,7 @@ function App() {
             max="10"
             step="1"
             value={formData.painLevel}
-            onChange={e => handleChange('painLevel', Number(e.target.value))}
+            onChange={(e) => handleChange('painLevel', Number(e.target.value))}
             style={{ width: '100%', marginBottom: '12px' }}
           />
           <div style={{ textAlign: 'center', fontSize: '28px', fontWeight: 600 }}>
@@ -184,7 +187,7 @@ function App() {
           </label>
           <textarea
             value={formData.symptoms}
-            onChange={e => handleChange('symptoms', e.target.value)}
+            onChange={(e) => handleChange('symptoms', e.target.value)}
             placeholder="Жжение, зуд, боль при сидении..."
             rows={5}
             style={{
